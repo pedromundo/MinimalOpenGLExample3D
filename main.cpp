@@ -34,20 +34,18 @@ GLvoid shaderPlumbing(){
 	glPointSize(2);
 
 	//MVP matrix
-	glm::mat4 MVP = Projection * Model * View;	
+	glm::mat4 MVP = Projection * Model * View;
 	GLuint MVPId = glGetUniformLocation(basicShader, "MVP");
-	glUniformMatrix4fv(MVPId,1, GL_FALSE, glm::value_ptr(MVP));	
+	glUniformMatrix4fv(MVPId, 1, GL_FALSE, glm::value_ptr(MVP));
 
 	//position data
 	glBindVertexArray(VertexArrayIDs[0]);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffers[0]);
-	glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GLfloat)*nvertices, points->data(), GL_STATIC_DRAW);
 	glEnableVertexAttribArray(glGetAttribLocation(basicShader, "aPosition"));
 	glVertexAttribPointer(glGetAttribLocation(basicShader, "aPosition"), 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 
 	//color data
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffers[1]);
-	glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat)*nvertices, colors->data(), GL_STATIC_DRAW);
 	glEnableVertexAttribArray(glGetAttribLocation(basicShader, "aColor"));
 	glVertexAttribPointer(glGetAttribLocation(basicShader, "aColor"), 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 }
@@ -66,6 +64,8 @@ GLvoid display(GLvoid){
 	glDrawArrays(GL_POINTS, 0, (GLsizei)nvertices);
 	glutSwapBuffers();
 	glutPostRedisplay();
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 GLvoid initShaders() {
@@ -104,7 +104,7 @@ GLint initGL(GLint *argc, GLchar **argv)
 	glutInit(argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize(wWidth, wHeight);
-	glutCreateWindow("OpenGL Viewer Scaffold");
+	glutCreateWindow("OpenGL 2D Viewer Scaffold");
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
 	glutReshapeFunc(reshape);
@@ -115,6 +115,16 @@ GLint initGL(GLint *argc, GLchar **argv)
 inline GLfloat interpolate(const GLfloat a, const GLfloat b, const GLfloat coefficient)
 {
 	return a + coefficient * (b - a);
+}
+
+GLvoid initBufferData(){
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffers[0]);
+	glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GLfloat)*nvertices, points->data(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffers[1]);
+	glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat)*nvertices, colors->data(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 GLint main(GLint argc, GLchar **argv)
@@ -129,11 +139,11 @@ GLint main(GLint argc, GLchar **argv)
 		);
 	Projection = glm::perspective(glm::radians(45.0f), (float)wWidth / (float)wHeight, 0.1f, 100.0f);
 
-	//Setting up the point positions for our screen
+	//Setting up the point positions and colors for our screen
 	for (GLuint i = 0; i < dHeight; i++)
 	{
 		for (GLuint j = 0; j < dWidth; j++)
-		{			
+		{
 			points->push_back({ interpolate(-1.0f, 1.0f, j / (GLfloat)(dWidth - 1)), interpolate(1.0f, -1.0f, i / (GLfloat)(dHeight - 1)), 1.0f });
 			colors->push_back({ interpolate(-1.0f, 1.0f, j / (GLfloat)(dWidth - 1)), interpolate(1.0f, -1.0f, i / (GLfloat)(dHeight - 1)), 1.0f, 1.0f });
 		}
@@ -152,6 +162,7 @@ GLint main(GLint argc, GLchar **argv)
 	glGenBuffers(2, vertexbuffers);
 
 	initShaders();
+	initBufferData();
 
 	glutMainLoop();
 
